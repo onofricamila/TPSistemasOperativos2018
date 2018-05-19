@@ -103,7 +103,7 @@ Comprobé se veia el archivo desde el navegador, accediendo a localhost:8080.
 Modificamos el archivo index.html y vimos los cambios estando parados en el directorio /apachedata en el SO base, y de la siguinte manera:
 ```
 $ sudo bash
-# echo "<html><p>Onofri Camila 13735/6 | Raimondi Sebastian</p></html>" >> index.html
+# echo "<html><head><meta charset=utf-8><title>httpd en un container</title></head><body><h1>Trabajo Práctico SO 2018</h1><p>Onofri Camila 13735/6 | Raimondi Sebastian</p></body></html>" > index.html
 # exit
 $ cat index.html
 ```
