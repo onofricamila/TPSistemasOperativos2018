@@ -16,7 +16,7 @@ Después de ejecutar el comando, se ve un listado de imágenes docker que coinci
 
 **b) Generar un container a partir de la imagen obtenida en el punto anterior que simplemente ejecute el comando ​`ls -l`.**
 
-Hacemos lo pedido con el comando: `docker run --name ubuntuTest -i -t ubuntu ls -l`. El container muestra el listado largo de contenido dentro del directorio actual en el (/) y luego finaliza su ejecución.
+Hacemos lo pedido con el comando: `docker run --name ubuntuPunto2 -i -t ubuntu ls -l`. El container muestra el listado largo de contenido dentro del directorio actual en el (/) y luego finaliza su ejecución.
 
 **c) ¿Qué sucede si ejecuta el comando ​ `docker [container] run ubuntu /bin/bash​` (la opción container podría no indicarse)?**
 
@@ -55,43 +55,63 @@ Corremos el comando `docker container ls` y notamos actualmente no se está ejec
 Para eliminar todos los contenedores creados hasta el momento debemos correr el comando `docker container ls -a` para obtener sus respectivos ids, y luego correr `docker container rm ` enviandole como parametro los ids de los containers que queremos borrar. Ejemplo: `docker container rm id_1 id_2 id_3`. Como nota vale aclarar que si queremos borrar un container que se encuentra en ejecución, debemos forzar su eliminación agregando la opción `-f` al comando `docker container rm`.
 
 ### 3) En los siguientes puntos se generará una nueva imagen a partir de un container:
-a) Generar un container a partir de la imagen de Ubuntu en modo interactivo y
-que ejecute una consola.
-b) Instalar, usando los siguientes comandos, el servidor Apache y salir del
-container.
+**a) Generar un container a partir de la imagen de Ubuntu en modo interactivo y que ejecute una consola.**
+
+`docker container run --name ubuntuPunto3 -ti ubuntu`
+
+**b) Instalar, usando los siguientes comandos, el servidor Apache y salir del container.**
+```sh
 apt update -qq
 apt install apache2 -qqy
-c) Generar una nueva imagen a partir del container anterior. ¿Con qué nombre
-se genera?
-d) Cambiar el nombre de la imagen de manera que en la columna Repository
-aparezca apache2 y en el tag v1:
-e) Ahora ejecutar un container con un servidor HTTP. Para esto crear un
-directorio ​ /apachedata en el directorio raíz del Sistema Operativo base y
-dentro de él un archivo con el contenido HTML que se puede ver al final de
-este enunciado de práctica.
-f) Crear un contenedor que ejecute el servidor Apache y que sea capaz de
-mostrar el contenido del archivo. Para esto tener en cuenta lo siguiente:
-i)
-Se debe montar el directorio ​ /apachedata en el directorio raíz (o
-Document Root ​ ) de Apache: ​ /var/www/html
-ii)
-Se debe exponer el puerto ​ 80 del contenedor en el ​ 8080 del Sistema
-Operativo base.
-iii)
-Para
-ejecutar
-el
-servidor
-Apache
-usar
-el comando:
-/usr/sbin/apache2ctl -D FOREGROUND
-g) Modificar el archivo ​ index.html agregándole una línea con el nombre y
-nro. de alumno de cada integrante del grupo. ¿Es necesario reiniciar el
-container para ver el nuevo archivo?
-h) ¿Por qué es necesario ejecutar el comando ​ apache2ctl con la opción ​ -D
-FOREGROUND​
-?
+```
+Ejecutamos adicionalmente el comando `exit` para salir del container.
+
+**c) Generar una nueva imagen a partir del container anterior. ¿Con qué nombre se genera?**
+
+Creamos la nueva imagen a partir de dicho container con el comando `docker commit 82fd97cd1644`, siendo ese el id del container. Como no indicamos el nombre, no tiene ninguno. 
+
+**d) Cambiar el nombre de la imagen de manera que en la columna Repository aparezca apache2 y en el tag v1:**
+
+Con el comando `docker tag f09 apache2:v1` logramos el resultado esperado, siendo f09 los primeros 3 caracteres del id de la imagen. Vemos se realizó el cambio corriendo `docker images`.
+
+**e) Ahora ejecutar un container con un servidor HTTP. Para esto crear un directorio ​ /apachedata en el directorio raíz del Sistema Operativo base y dentro de él un archivo con el contenido HTML que se puede ver al final de
+este enunciado de práctica.**
+
+```
+$ cd /
+$ sudo bash
+# mkdir apachedata
+# cd apachedata
+# echo "<html><head><meta charset=utf-8><title>httpd en un container</title></head><body><h1>Trabajo Práctico SO 2018</h1></body></html>" > index.html
+# exit
+```
+
+**f) Crear un contenedor que ejecute el servidor Apache y que sea capaz de mostrar el contenido del archivo. Para esto tener en cuenta lo siguiente:**
+
+i) Se debe montar el directorio ​ /apachedata en el directorio raíz (o Document Root ​ ) de Apache: ​ /var/www/html
+ii) Se debe exponer el puerto ​ 80 del contenedor en el ​ 8080 del Sistema Operativo base.
+iii) Para ejecutar el servidor Apache
+usar el comando: /usr/sbin/apache2ctl -D FOREGROUND 
+
+Hice todo lo pedido en este punto con el siguiente comando:
+`docker container run --publish 8080:80 --name webhost -v /apachedata:/var/www/html apache2:v1 usr/sbin/apache2ctl -D FOREGROUND`
+
+Comprobé se veia el archivo desde el navegador, accediendo a localhost:8080.
+
+**g) Modificar el archivo ​ index.html agregándole una línea con el nombre y nro. de alumno de cada integrante del grupo. ¿Es necesario reiniciar el container para ver el nuevo archivo?**
+
+Modificamos el archivo index.html y vimos los cambios estando parados en el directorio /apachedata en el SO base, y de la siguinte manera:
+```
+$ sudo bash
+# echo "<html><p>Onofri Camila 13735/6 | Raimondi Sebastian</p></html>" >> index.html
+# exit
+$ cat index.html
+```
+No, no fue necesario reiniciar el container para ver los cambios, simplemente recargamos el navegador. 
+
+**h) ¿Por qué es necesario ejecutar el comando ​ apache2ctl con la opción ​ -D FOREGROUND​ ?**
+
+La opción -D FOREGROUND define una directiva especial de apache que lo que va a causar es que el proceso padre corra en primer plano y no se 'despegue' de la shell. Probando con la opción `-D BACKGROUND`, el container finalizaba su ejecución apenas comenzaba a ejecutarse.
 
 ### 4) En el siguiente punto se hará uso de un archivo ​Dockerfile para crear una imagen con similares características a la creada en el punto anterior:
 a) Crear un archivo ​ Dockerfile​ que realice lo siguiente:
