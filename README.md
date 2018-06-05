@@ -89,7 +89,9 @@ $ sudo bash
 **f) Crear un contenedor que ejecute el servidor Apache y que sea capaz de mostrar el contenido del archivo. Para esto tener en cuenta lo siguiente:**
 
 i) Se debe montar el directorio ​ /apachedata en el directorio raíz (o Document Root ​ ) de Apache: ​ /var/www/html
+
 ii) Se debe exponer el puerto ​ 80 del contenedor en el ​ 8080 del Sistema Operativo base.
+
 iii) Para ejecutar el servidor Apache
 usar el comando: /usr/sbin/apache2ctl -D FOREGROUND 
 
@@ -114,41 +116,86 @@ No, no fue necesario reiniciar el container para ver los cambios, simplemente re
 La opción -D FOREGROUND define una directiva especial de apache que lo que va a causar es que el proceso padre corra en primer plano y no se 'despegue' de la shell. Probando con la opción `-D BACKGROUND`, el container finalizaba su ejecución apenas comenzaba a ejecutarse.
 
 ### 4) En el siguiente punto se hará uso de un archivo ​Dockerfile para crear una imagen con similares características a la creada en el punto anterior:
+
 a) Crear un archivo ​ Dockerfile​ que realice lo siguiente:
-i)
-Bajar la última versión de la imagen de Ubuntu desde un repositorio
-ii)
-Instalar el servidor Apacheiii)
-iv)
-Copiar el archivo ​ index.html (ubica dentro del directorio
-/apachedata del Sistema Operativo base) al directorio
-/var/www/html
-Indicar al container el comando que se ejecutará cuando se inicie
-(​ apache2ctl -D FOREGROUND​
-). Utilice la forma ​ exec para definir el
-comando.
-Hint.: las instrucciones necesarias para el archivo Dockerfile son:
-FROM, EXPOSE, RUN, COPY y CMD
+
+* i) Bajar la última versión de la imagen de Ubuntu desde un repositorio
+
+* ii) Instalar el servidor Apacheiii)
+
+* iv) Copiar el archivo ​ index.html (ubica dentro del directorio /apachedata del Sistema Operativo base) al directorio /var/www/html
+
+* Indicar al container el comando que se ejecutará cuando se inicie (​ apache2ctl -D FOREGROUND​ ). Utilice la forma ​ exec para definir el comando.
+
+* Hint.: las instrucciones necesarias para el archivo Dockerfile son: FROM, EXPOSE, RUN, COPY y CMD
+
+```dockerfile
+FROM ubuntu:latest
+EXPOSE 80
+RUN apt update -qq && apt install apache2 -qqy
+COPY index.html /var/www/html
+CMD ["apache2ctl","-D","FOREGROUND"]
+```
+
 b) Construir una imagen desde el ​ Dockerfile creado, guardarla localmente
 con el nombre ​ apache2:so2018
-c) Ejecutar el container con las opciones adecuadas y ver si es posible acceder
-al contenido del archivo ​ index.html desde un navegador (u otra
-herramienta que permita ver el contenido del archivo servido por Apache).
+
+Posicionado en el directorio donde estan ubicados Dockerfile y index.html ejecutamos: `docker build -t apache2:so2018 .`
+
+Si no estuvieramos parados en el directorio que contiene el Dockerfile, podemos indicarle el path deseado con la opcion -f
+
+c) Ejecutar el container con las opciones adecuadas y ver si es posible acceder al contenido del archivo ​ index.html desde un navegador (u otra herramienta que permita ver el contenido del archivo servido por Apache .
+
+Ejecutamos el comando: `docker run -p 8080:80 apache2:so2018`
 
 ### 5) ¿Qué es un union-filesystem? ¿Cuál/es y cómo los utiliza Docker?
 
+  Union filesystem es un servicio para sistemas de archivos linux que permite montar un filesystem formado por la unión de otros filesystems. Permite que archivos y directorios de diferentes filesystems, conocidos como ramas, sean transparentemente superpuestos, formando un único filesystem. Los contenidos de los directorios que tienen el mismo path entre las ramas superpuestas serán vistos como si estuvieran en el mismo directorio en el nuevo filesystem virtual.
+
+  Las diferentes ramas pueden ser filesystems read-only o read-write, de forma que las escrituras al filesystem virtual combinado pueden realizarse sobre un filesystem real. Gracias a esto es posible hacer que un filesystem parezca modificable, sin permitir que las escrituras modifiquen el sistema de archivos, también conocido como copy-on-write.
+
+  Docker usa union filesystems para crear las capas de una imagen Docker. A medida que se realizan acciones sobre la imagen base se crean y documentan nuevas capas de modo que cada capa describe cómo recrear una acción en su totalidad. Esta estrategia permite la existencia de las imágenes livianas en Docker, ya que solo las modificaciones de las capas deben ser propagadas. Esto le permite a docker no duplicar los contenidos de una imagen cada vez que se inicia un nuevo contenedor. La capa que genera un container durante su ejecución es eliminada cuando el container se elimina, pero se pueden guardar en una nueva imagen usando el comando `docker commit <container> <name:tag>`.
+
 ### 6) ¿Qué dirección IP tienen los containers? ¿De dónde la obtienen?
 
+Por defecto, al contenedor se le asigna una dirección IP para cada red docker a la que se conecta. Cada red tiene asignada un pool de ips, del cual se toma una y se le asigna al contenedor. Cada red tiene también una máscara de subred y gateway default.
+
+Se le puede asignar las direcciones ip a un container usando los flags `--ip` o `--ip6` al momento de asignarle una red con el flag `--network` durante su inicio o cuando se conecta el container a una nueva red con el comando `docker network connect`.
+
+Para obtener la ip de un container se puede ejecutar el comando `docker inspect <contianer>` y la encontraremos dentro de `NetworkSettings` junto con mas informacion de la red.
+En el caso del punto 4, la dirección que fue asignada por defecto al container creado fue `172.17.0.2`
+
 ### 7) Describa brevemente los tipos de redes que se pueden utilizar en Docker. ¿Cuál piensa que Docker utiliza por defecto? Contenido del archivo ​ index.html​:
+
+
+Los tipos de red instalados por defecto son:
+
+- `bridge`:
+    Es el tipo de red por defecto. Una red bridge le permite a distintos containers conectados a comunicarse entre si, mientras están aisladas de los containers que no están conectados al `bridge`. Los bridge solo aplican a containers corriendo en el mismo host. Los contenedores no tendrán acceso a ninguna ruta externa.
+
+- `host`: 
+    No aíslan al container del host, por lo tanto si un container que implementa una red `host` y esta bindeado al puerto 80 podrá ser accedido en el puerto 80 de la ip del host. Es más eficiente que bridge ya que usa el stack de red nativo del host, mientras que usando bridge se debe atravesar una capa de virtualización.
+
+- `overlay`: 
+    Conectan múltiples docker daemons, haciendo posibles que los servicios swarm se comuniquen entre sí. También pueden ser usados para comunicar un servicio swarm con un container independiente o entre dos containers independientes en diferentes docker daemons, eliminando la necesidad de ruteo a nivel del sistema operativo entre estos containers.
+
+- `macvlan`: 
+    permiten asignar una dirección MAC a un container, permitiéndole aparecer como un dispositivo físico en una red. El Docker daemon rutea tráfico a los containers por su dirección MAC. Muchas veces es usado para trabajar con aplicaciones legacy.
+
+- `none`: 
+    Deshabilita toda la funcionalidad de red para un container. Generalmente usado en conjunto con un driver de red modificado. `none` no está disponible para servicios swarm.
+
+Adicionalmente un usuario puede crear su propia red usando un driver de red de Docker o un plugin externo.
+
 ```html
 <html>
-<head>
-<meta charset=utf-8>
-<title>httpd en un container!</title>
-</head>
-<body>
-<h1>Trabajo Práctico SO 2018</h1>
-</body>
+    <head>
+        <meta charset=utf-8>
+        <title>httpd en un container!</title>
+    </head>
+    <body>
+        <h1>Trabajo Práctico SO 2018</h1>
+    </body>
 </html>
 ```
 
