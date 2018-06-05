@@ -3,7 +3,7 @@
 
 ### Grupo:
 * Onofri, Camila Ayelén 13735/6
-* Raimondi, Sebastián
+* Raimondi, Sebastián 13782/4
 
 ### 1) Instalar Docker CE en su sistema operativo. (Hint: seguir las instrucciones de la página de Docker. La instalación más simple es usando los respositorios: https://docs.docker.com/install/linux/docker-ce/debian/#install-using-the-repository​. Seleccionar las opciones “Jessie or newer” y “x86_64 / amd64”)
 
@@ -105,7 +105,7 @@ Comprobé se veia el archivo desde el navegador, accediendo a localhost:8080.
 Modificamos el archivo index.html y vimos los cambios estando parados en el directorio /apachedata en el SO base, y de la siguinte manera:
 ```
 $ sudo bash
-# echo "<html><head><meta charset=utf-8><title>httpd en un container</title></head><body><h1>Trabajo Práctico SO 2018</h1><p>Onofri Camila 13735/6 | Raimondi Sebastian</p></body></html>" > index.html
+# echo "<html><head><meta charset=utf-8><title>httpd en un container</title></head><body><h1>Trabajo Práctico SO 2018</h1><p>Onofri Camila 13735/6 | Raimondi Sebastian 13782/4</p></body></html>" > index.html
 # exit
 $ cat index.html
 ```
@@ -117,17 +117,17 @@ La opción -D FOREGROUND define una directiva especial de apache que lo que va a
 
 ### 4) En el siguiente punto se hará uso de un archivo ​Dockerfile para crear una imagen con similares características a la creada en el punto anterior:
 
-a) Crear un archivo ​ Dockerfile​ que realice lo siguiente:
+**a) Crear un archivo ​ Dockerfile​ que realice lo siguiente:**
 
 * i) Bajar la última versión de la imagen de Ubuntu desde un repositorio
 
-* ii) Instalar el servidor Apacheiii)
+* ii) Instalar el servidor Apache
 
-* iv) Copiar el archivo ​ index.html (ubica dentro del directorio /apachedata del Sistema Operativo base) al directorio /var/www/html
+* iii) Copiar el archivo ​ index.html (ubica dentro del directorio /apachedata del Sistema Operativo base) al directorio /var/www/html
 
-* Indicar al container el comando que se ejecutará cuando se inicie (​ apache2ctl -D FOREGROUND​ ). Utilice la forma ​ exec para definir el comando.
+* iv) Indicar al container el comando que se ejecutará cuando se inicie (​ apache2ctl -D FOREGROUND​ ). Utilice la forma ​ exec para definir el comando.
 
-* Hint.: las instrucciones necesarias para el archivo Dockerfile son: FROM, EXPOSE, RUN, COPY y CMD
+* Hint: las instrucciones necesarias para el archivo Dockerfile son: FROM, EXPOSE, RUN, COPY y CMD
 
 ```dockerfile
 FROM ubuntu:latest
@@ -137,14 +137,13 @@ COPY index.html /var/www/html
 CMD ["apache2ctl","-D","FOREGROUND"]
 ```
 
-b) Construir una imagen desde el ​ Dockerfile creado, guardarla localmente
-con el nombre ​ apache2:so2018
+**b) Construir una imagen desde el ​ Dockerfile creado, guardarla localmente con el nombre ​ apache2:so2018**
 
 Posicionado en el directorio donde estan ubicados Dockerfile y index.html ejecutamos: `docker build -t apache2:so2018 .`
 
 Si no estuvieramos parados en el directorio que contiene el Dockerfile, podemos indicarle el path deseado con la opcion -f
 
-c) Ejecutar el container con las opciones adecuadas y ver si es posible acceder al contenido del archivo ​ index.html desde un navegador (u otra herramienta que permita ver el contenido del archivo servido por Apache .
+**c) Ejecutar el container con las opciones adecuadas y ver si es posible acceder al contenido del archivo ​ index.html desde un navegador (u otra herramienta que permita ver el contenido del archivo servido por Apache.**
 
 Ejecutamos el comando: `docker run -p 8080:80 apache2:so2018`
 
@@ -158,15 +157,14 @@ Ejecutamos el comando: `docker run -p 8080:80 apache2:so2018`
 
 ### 6) ¿Qué dirección IP tienen los containers? ¿De dónde la obtienen?
 
-Por defecto, al contenedor se le asigna una dirección IP para cada red docker a la que se conecta. Cada red tiene asignada un pool de ips, del cual se toma una y se le asigna al contenedor. Cada red tiene también una máscara de subred y gateway default.
+Por defecto, al contenedor se le asigna una dirección IP para cada red docker a la que se conecta. Cada red tiene asignada un pool de ips, del cual se toma una y se le asigna al contenedor. Cada red tiene también una máscara de subred y default gateway.
 
 Se le puede asignar las direcciones ip a un container usando los flags `--ip` o `--ip6` al momento de asignarle una red con el flag `--network` durante su inicio o cuando se conecta el container a una nueva red con el comando `docker network connect`.
 
 Para obtener la ip de un container se puede ejecutar el comando `docker inspect <contianer>` y la encontraremos dentro de `NetworkSettings` junto con mas informacion de la red.
 En el caso del punto 4, la dirección que fue asignada por defecto al container creado fue `172.17.0.2`
 
-### 7) Describa brevemente los tipos de redes que se pueden utilizar en Docker. ¿Cuál piensa que Docker utiliza por defecto? Contenido del archivo ​ index.html​:
-
+### 7) Describa brevemente los tipos de redes que se pueden utilizar en Docker. ¿Cuál piensa que Docker utiliza por defecto?
 
 Los tipos de red instalados por defecto son:
 
@@ -186,6 +184,8 @@ Los tipos de red instalados por defecto son:
     Deshabilita toda la funcionalidad de red para un container. Generalmente usado en conjunto con un driver de red modificado. `none` no está disponible para servicios swarm.
 
 Adicionalmente un usuario puede crear su propia red usando un driver de red de Docker o un plugin externo.
+
+###  Contenido del archivo ​ index.html​:
 
 ```html
 <html>
